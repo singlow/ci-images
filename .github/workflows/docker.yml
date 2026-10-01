@@ -1,6 +1,12 @@
 name: Docker Image CI
 
-on: [push]
+# Publish images from main and version tags only.
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "*"
 
 env:
   DOCKER_TAG: latest
@@ -30,7 +36,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           platforms: linux/amd64,linux/arm64,linux/arm/7
-          driver-opts: 'image=moby/buildkit:v0.10.5'
 
       - uses: mr-smithers-excellent/docker-build-push@v6
         name: Build & Push Docker image (Linux)
@@ -104,7 +109,7 @@ jobs:
     needs: [build-linux]
     permissions:
       contents: read
-      packages: write
+      packages: read
 
     steps:
       - uses: actions/checkout@v4
@@ -135,7 +140,7 @@ jobs:
           docker run -i --rm --volume ${GITHUB_WORKSPACE}/artifacts:/codesign/output --env-file .env ${{ env.LINUX_DOCKER_IMAGE_NAME }} sign -input_file_path="/codesign/examples/codesign\ \(1\).ps1" -output_dir_path=/codesign/output
 
       - name: Upload Signed Files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: codesign.ps1
           path: ./artifacts/codesign.ps1
@@ -145,7 +150,7 @@ jobs:
     needs: [build-windows-2022]
     permissions:
       contents: read
-      packages: write
+      packages: read
 
     steps:
       - uses: actions/checkout@v4
@@ -177,9 +182,9 @@ jobs:
           docker run -i --rm --volume .\artifacts:C:\CodeSignTool\output --env-file .env ${{ env.WINDOWS_DOCKER_IMAGE_NAME }} sign ``-input_file_path="C:\CodeSignTool\examples\codesign`` ``(1``).ps1" ``-output_dir_path=C:\CodeSignTool\output
 
       - name: Upload Signed Files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: codesign-win.ps1
+          name: codesign-win2022.ps1
           path: ./artifacts/codesign.ps1
 
   test-windows-2019:
@@ -187,7 +192,7 @@ jobs:
     needs: [build-windows-2019]
     permissions:
       contents: read
-      packages: write
+      packages: read
 
     steps:
       - uses: actions/checkout@v4
@@ -219,7 +224,7 @@ jobs:
           docker run -i --rm --volume .\artifacts:C:\CodeSignTool\output --env-file .env ${{ env.WINDOWS_2019_DOCKER_IMAGE_NAME }} sign ``-input_file_path="C:\CodeSignTool\examples\codesign`` ``(1``).ps1" ``-output_dir_path=C:\CodeSignTool\output
 
       - name: Upload Signed Files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: codesign-win.ps1
+          name: codesign-win2019.ps1
           path: ./artifacts/codesign.ps1
