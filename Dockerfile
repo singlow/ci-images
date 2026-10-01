@@ -13,8 +13,11 @@ ENV JVM_OPTS="-Xms512m -Xmx2048m"
 # Install Packages
 RUN apt update && apt install -y unzip vim wget curl
 
-# Add CodeSignTool
-ADD --chown=root:root "https://github.com/SSLcom/CodeSignTool/releases/download/v1.3.1/CodeSignTool-v1.3.1.zip" "/tmp/CodeSignTool-v1.3.1.zip"
+# Add CodeSignTool.
+# sha256 of the v1.3.1 release zip. Update this when the version changes.
+RUN curl -fsSL -o /tmp/CodeSignTool-v1.3.1.zip \
+      "https://github.com/SSLcom/CodeSignTool/releases/download/v1.3.1/CodeSignTool-v1.3.1.zip" \
+    && echo "83d72ca2f0cf9a61ec7f2b0470e91abfdb5999392170097f0f4d81cbea4a5458  /tmp/CodeSignTool-v1.3.1.zip" | sha256sum -c -
 
 RUN mkdir -p "/codesign" && unzip "/tmp/CodeSignTool-v1.3.1.zip" -d "/codesign" && \
     chmod +x "/codesign/CodeSignTool.sh" && ln -s "/codesign/CodeSignTool.sh" "/usr/bin/codesign"

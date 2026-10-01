@@ -47,7 +47,13 @@ CMD ["jshell"]
 
 # Add CodeSignTool
 RUN New-Item -ItemType Directory -Force -Path C:\Setup
-RUN Invoke-WebRequest -OutFile C:\Setup\CodeSignTool-v1.3.1.zip "https://github.com/SSLcom/CodeSignTool/releases/download/v1.3.1/CodeSignTool-v1.3.1-windows.zip"
+# sha256 of the v1.3.1 Windows zip. Update this when the version changes.
+RUN Invoke-WebRequest -OutFile C:\Setup\CodeSignTool-v1.3.1.zip "https://github.com/SSLcom/CodeSignTool/releases/download/v1.3.1/CodeSignTool-v1.3.1-windows.zip"; \
+    Write-Host 'Verifying sha256 (e45a9e6c2aac4cae16c114eb590a2196406681357eb587507c65cd3646b5330d) ...'; \
+    if ((Get-FileHash C:\Setup\CodeSignTool-v1.3.1.zip -Algorithm sha256).Hash -ne 'E45A9E6C2AAC4CAE16C114EB590A2196406681357EB587507C65CD3646B5330D') { \
+        Write-Host 'FAILED! CodeSignTool zip did not match the expected hash.'; \
+        exit 1; \
+    }
 
 RUN New-Item -ItemType Directory -Force -Path C:\CodeSignTool
 RUN Expand-Archive -LiteralPath C:\Setup\CodeSignTool-v1.3.1.zip -DestinationPath C:/CodeSignTool -Force
