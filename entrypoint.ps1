@@ -20,7 +20,8 @@ if ($ENVIRONMENT_NAME -ne "PROD") {
 Write-Host "Running ESigner.com CodeSign Action on $CURRENT_ENV [$env:JVM_OPTS]"
 Write-Host ""
 
-$COMMAND = "C:/CodeSignTool/jdk-11.0.2/bin/java $env:JVM_OPTS -jar C:/CodeSignTool/jar/code_sign_tool-1.3.1.jar"
+# Temurin installed by the Windows Dockerfiles at C:\openjdk-11.
+$COMMAND = "C:/openjdk-11/bin/java.exe $env:JVM_OPTS -jar C:/CodeSignTool/jar/code_sign_tool-1.3.1.jar"
 
 # CMD Args
 $numOfArgs = $args.Length
