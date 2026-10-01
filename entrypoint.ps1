@@ -48,8 +48,9 @@ if ($CMD -notcontains "--help") {
 }
 
 Write-Output "Running Command: $COMMAND"
-$RESULT = & Invoke-Expression $COMMAND | Out-String
-if ($RESULT -match "Error" -OR $RESULT -match "Exception" -OR $RESULT -match "Missing required option" -OR $RESULT -match "Unmatched arguments from" -OR $RESULT -match "Unmatched argument" -OR $RESULT -match "Not a valid output directory") {
+# CodeSignTool can print an error and still exit 0.
+$RESULT = & Invoke-Expression $COMMAND 2>&1 | Out-String
+if ($LASTEXITCODE -ne 0 -or $RESULT -match "Error" -OR $RESULT -match "Exception" -OR $RESULT -match "Missing required option" -OR $RESULT -match "Unmatched arguments from" -OR $RESULT -match "Unmatched argument" -OR $RESULT -match "Not a valid output directory") {
     Write-Host "Something Went Wrong. Please try again."
     Write-Host "$RESULT"
     exit 1

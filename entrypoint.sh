@@ -43,8 +43,12 @@ if [[ ! "${CMD[@]}" =~ .*"--help".* ]]; then
   fi
 fi
 
+# CodeSignTool can print an error and still exit 0.
+set +e
 RESULT=$(bash -c "set -e; $COMMAND 2>&1")
-if [[ "$RESULT" =~ .*"Error".* || "$RESULT" =~ .*"Exception".* || "$RESULT" =~ .*"Missing required option".* || $RESULT =~ .*"Unmatched arguments from".* || $RESULT =~ .*"Unmatched argument".* || $RESULT =~ .*"Not a valid output directory".* ]]; then
+status=$?
+set -e
+if [[ $status -ne 0 || "$RESULT" =~ .*"Error".* || "$RESULT" =~ .*"Exception".* || "$RESULT" =~ .*"Missing required option".* || $RESULT =~ .*"Unmatched arguments from".* || $RESULT =~ .*"Unmatched argument".* || $RESULT =~ .*"Not a valid output directory".* ]]; then
   echo "Something Went Wrong. Please try again."
   echo "$RESULT"
   exit 1
