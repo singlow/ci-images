@@ -66,4 +66,5 @@ RUN New-Item -ItemType Directory -Force -Path C:\CodeSignTool\output
 
 WORKDIR C:/CodeSignTool
 
-ENTRYPOINT ["powershell", "C:\\CodeSignTool\\entrypoint.ps1"]
+# -File keeps arguments literal. The default -Command mode parses them as PowerShell.
+ENTRYPOINT ["powershell", "-NoProfile", "-NonInteractive", "-File", "C:\\CodeSignTool\\entrypoint.ps1"]
