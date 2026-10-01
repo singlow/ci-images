@@ -22,36 +22,46 @@ else
     CMD=( "$@" )
 fi
 
-COMMAND="java ${JVM_OPTS} -jar ${CODE_SIGN_TOOL_PATH}/jar/code_sign_tool-1.3.1.jar"
-
-# CMD Args
-COMMAND="$COMMAND ${CMD[@]}"
+# Arguments, not a shell string. Passwords and paths must reach java unchanged.
+args=(java)
+if [[ -n ${JVM_OPTS:-} ]]; then
+    # Space-separated java flags, not one argument.
+    read -r -a jvm_opts <<< "$JVM_OPTS"
+    args+=("${jvm_opts[@]}")
+fi
+args+=(-jar "${CODE_SIGN_TOOL_PATH}/jar/code_sign_tool-1.3.1.jar")
+args+=("${CMD[@]}")
 
 # Authentication Info
-if [[ ! "${CMD[@]}" =~ .*"--help".* ]]; then
-  [ ! -z "$USERNAME" ] && COMMAND="$COMMAND -username=$(echo $USERNAME | awk '{gsub( /[(`$)]/, "\\\\&"); print $0}')"
-  [ ! -z "$PASSWORD" ] && COMMAND="$COMMAND -password=$(echo $PASSWORD | awk '{gsub( /[(`$)]/, "\\\\&"); print $0}')"
+if [[ ! "${CMD[*]}" =~ --help ]]; then
+  [[ -n ${USERNAME:-} ]] && args+=("-username=${USERNAME}")
+  [[ -n ${PASSWORD:-} ]] && args+=("-password=${PASSWORD}")
 
-  if [[ ! "${CMD[@]}" =~ .*"get_credential_ids".* ]]; then
-      [ ! -z $CREDENTIAL_ID ] && COMMAND="${COMMAND} -credential_id=${CREDENTIAL_ID}"
-      if [[ ! "${CMD[@]}" =~ .*"credential_info".* ]]; then
-        [ ! -z $TOTP_SECRET ]  && COMMAND="${COMMAND} -totp_secret=${TOTP_SECRET}"
-        [ ! -z $PROGRAM_NAME ] && COMMAND="${COMMAND} -program_name=${PROGRAM_NAME}"
-        [ ! -z $FILE_PATH ]    && COMMAND="${COMMAND} -input_file_path=${FILE_PATH}"
-        [ ! -z $OUTPUT_PATH ]  && COMMAND="${COMMAND} -output_dir_path=${OUTPUT_PATH}"
+  if [[ ! "${CMD[*]}" =~ get_credential_ids ]]; then
+      [[ -n ${CREDENTIAL_ID:-} ]] && args+=("-credential_id=${CREDENTIAL_ID}")
+      if [[ ! "${CMD[*]}" =~ credential_info ]]; then
+        [[ -n ${TOTP_SECRET:-} ]] && args+=("-totp_secret=${TOTP_SECRET}")
+        [[ -n ${PROGRAM_NAME:-} ]] && args+=("-program_name=${PROGRAM_NAME}")
+        [[ -n ${FILE_PATH:-} ]] && args+=("-input_file_path=${FILE_PATH}")
+        [[ -n ${OUTPUT_PATH:-} ]] && args+=("-output_dir_path=${OUTPUT_PATH}")
       fi
   fi
 fi
 
-RESULT=$(bash -c "set -e; $COMMAND 2>&1")
-if [[ "$RESULT" =~ .*"Error".* || "$RESULT" =~ .*"Exception".* || "$RESULT" =~ .*"Missing required option".* || $RESULT =~ .*"Unmatched arguments from".* || $RESULT =~ .*"Unmatched argument".* || $RESULT =~ .*"Not a valid output directory".* ]]; then
+# CodeSignTool can print an error and still exit 0.
+# Keep the tool's output when it exits non-zero. The check below decides success.
+set +e
+RESULT=$("${args[@]}" 2>&1)
+status=$?
+set -e
+if [[ $status -ne 0 || "$RESULT" =~ .*"Error".* || "$RESULT" =~ .*"Exception".* || "$RESULT" =~ .*"Missing required option".* || $RESULT =~ .*"Unmatched arguments from".* || $RESULT =~ .*"Unmatched argument".* || $RESULT =~ .*"Not a valid output directory".* ]]; then
   echo "Something Went Wrong. Please try again."
   echo "$RESULT"
   exit 1
 else
-  if [[ "${CMD[@]}" =~ .*"sign".* ]]; then
-    LOG_USERNAME=$(echo $USERNAME | sed "s/\"//g")
-    LOG_CREDENTIAL_ID=$(echo $CREDENTIAL_ID | sed "s/\"//g")
+  if [[ "${CMD[*]}" =~ sign ]]; then
+    LOG_USERNAME=$(echo "$USERNAME" | sed "s/\"//g")
+    LOG_CREDENTIAL_ID=$(echo "$CREDENTIAL_ID" | sed "s/\"//g")
     echo "Code signed successfully by ${LOG_USERNAME} using ${LOG_CREDENTIAL_ID} credential id"
   fi
   echo "$RESULT"

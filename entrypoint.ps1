@@ -20,36 +20,39 @@ if ($ENVIRONMENT_NAME -ne "PROD") {
 Write-Host "Running ESigner.com CodeSign Action on $CURRENT_ENV [$env:JVM_OPTS]"
 Write-Host ""
 
-$COMMAND = "C:/CodeSignTool/jdk-11.0.2/bin/java $env:JVM_OPTS -jar C:/CodeSignTool/jar/code_sign_tool-1.3.1.jar"
-
-# CMD Args
-$numOfArgs = $args.Length
-for ($i=0; $i -lt $numOfArgs; $i++)
-{
-    $PARAM = $($args[$i])
-    $PARAM = $PARAM.Replace(" ", "`` ").Replace('(', "``(").Replace(')', "``)")
-    $COMMAND = "$COMMAND $($PARAM -join ' ')"
+# Arguments, not a script. Passwords and paths must reach java unchanged.
+$javaArgs = @()
+if ($env:JVM_OPTS) {
+    $javaArgs += ($env:JVM_OPTS -split '\s+' | Where-Object { $_ -ne '' })
+}
+$javaArgs += '-jar'
+$javaArgs += 'C:/CodeSignTool/jar/code_sign_tool-1.3.1.jar'
+foreach ($param in $args) {
+    $javaArgs += [string]$param
 }
 
 # Authentication Info
 if ($CMD -notcontains "--help") {
-    if ($env:USERNAME) { $COMMAND = "$COMMAND -username=$env:USERNAME" }
-    if ($env:PASSWORD) { $COMMAND = "$COMMAND -password=$env:PASSWORD" }
+    if ($env:USERNAME) { $javaArgs += "-username=$($env:USERNAME)" }
+    if ($env:PASSWORD) { $javaArgs += "-password=$($env:PASSWORD)" }
 
     if ($CMD -notcontains "get_credential_ids") {
-        if ($env:CREDENTIAL_ID) { $COMMAND = "$COMMAND -credential_id=$env:CREDENTIAL_ID" }
+        if ($env:CREDENTIAL_ID) { $javaArgs += "-credential_id=$($env:CREDENTIAL_ID)" }
         if ($CMD -notcontains "credential_info") {
-            if ($env:TOTP_SECRET) { $COMMAND = "$COMMAND -totp_secret=$env:TOTP_SECRET" }
-            if ($env:PROGRAM_NAME) { $COMMAND = "$COMMAND -program_name=$env:PROGRAM_NAME" }
-            if ($env:FILE_PATH) { $COMMAND = "$COMMAND -input_file_path=$env:FILE_PATH" }
-            if ($env:OUTPUT_PATH) { $COMMAND = "$COMMAND -output_dir_path=$env:OUTPUT_PATH" }
+            if ($env:TOTP_SECRET) { $javaArgs += "-totp_secret=$($env:TOTP_SECRET)" }
+            if ($env:PROGRAM_NAME) { $javaArgs += "-program_name=$($env:PROGRAM_NAME)" }
+            if ($env:FILE_PATH) { $javaArgs += "-input_file_path=$($env:FILE_PATH)" }
+            if ($env:OUTPUT_PATH) { $javaArgs += "-output_dir_path=$($env:OUTPUT_PATH)" }
         }
     }
 }
 
-Write-Output "Running Command: $COMMAND"
-$RESULT = & Invoke-Expression $COMMAND | Out-String
-if ($RESULT -match "Error" -OR $RESULT -match "Exception" -OR $RESULT -match "Missing required option" -OR $RESULT -match "Unmatched arguments from" -OR $RESULT -match "Unmatched argument" -OR $RESULT -match "Not a valid output directory") {
+# Temurin installed by the Windows Dockerfiles at C:\openjdk-11.
+$java = 'C:/openjdk-11/bin/java.exe'
+Write-Host "Running CodeSignTool"
+# CodeSignTool can print an error and still exit 0.
+$RESULT = & $java @javaArgs 2>&1 | Out-String
+if ($LASTEXITCODE -ne 0 -or $RESULT -match "Error" -OR $RESULT -match "Exception" -OR $RESULT -match "Missing required option" -OR $RESULT -match "Unmatched arguments from" -OR $RESULT -match "Unmatched argument" -OR $RESULT -match "Not a valid output directory") {
     Write-Host "Something Went Wrong. Please try again."
     Write-Host "$RESULT"
     exit 1
