@@ -117,7 +117,7 @@ jobs:
       - name: Sign Example PS1 File
         run:  |
           docker run -i --rm --volume ${GITHUB_WORKSPACE}/artifacts:/codesign/output --env-file .env ${{ env.LINUX_DOCKER_IMAGE_NAME }} sign -input_file_path="/codesign/examples/codesign.ps1" -output_dir_path=/codesign/output
-          docker run -i --rm --volume ${GITHUB_WORKSPACE}/artifacts:/codesign/output --env-file .env ${{ env.LINUX_DOCKER_IMAGE_NAME }} sign -input_file_path="/codesign/examples/codesign\ \(1\).ps1" -output_dir_path=/codesign/output
+          docker run -i --rm --volume ${GITHUB_WORKSPACE}/artifacts:/codesign/output --env-file .env ${{ env.LINUX_DOCKER_IMAGE_NAME }} sign -input_file_path="/codesign/examples/codesign (1).ps1" -output_dir_path=/codesign/output
 
       - name: Upload Signed Files
         uses: actions/upload-artifact@v4
@@ -154,7 +154,7 @@ jobs:
         shell: powershell
         run: |
           docker run -i --rm --volume .\artifacts:C:\CodeSignTool\output --env-file .env ${{ env.WINDOWS_DOCKER_IMAGE_NAME }} sign ``-input_file_path="C:\CodeSignTool\examples\codesign.ps1" ``-output_dir_path=C:\CodeSignTool\output
-          docker run -i --rm --volume .\artifacts:C:\CodeSignTool\output --env-file .env ${{ env.WINDOWS_DOCKER_IMAGE_NAME }} sign ``-input_file_path="C:\CodeSignTool\examples\codesign`` ``(1``).ps1" ``-output_dir_path=C:\CodeSignTool\output
+          docker run -i --rm --volume .\artifacts:C:\CodeSignTool\output --env-file .env ${{ env.WINDOWS_DOCKER_IMAGE_NAME }} sign "-input_file_path=C:\CodeSignTool\examples\codesign (1).ps1" "-output_dir_path=C:\CodeSignTool\output"
 
       - name: Upload Signed Files
         uses: actions/upload-artifact@v4
@@ -191,7 +191,7 @@ jobs:
         shell: powershell
         run: |
           docker run -i --rm --volume .\artifacts:C:\CodeSignTool\output --env-file .env ${{ env.WINDOWS_2019_DOCKER_IMAGE_NAME }} sign ``-input_file_path="C:\CodeSignTool\examples\codesign.ps1" ``-output_dir_path=C:\CodeSignTool\output
-          docker run -i --rm --volume .\artifacts:C:\CodeSignTool\output --env-file .env ${{ env.WINDOWS_2019_DOCKER_IMAGE_NAME }} sign ``-input_file_path="C:\CodeSignTool\examples\codesign`` ``(1``).ps1" ``-output_dir_path=C:\CodeSignTool\output
+          docker run -i --rm --volume .\artifacts:C:\CodeSignTool\output --env-file .env ${{ env.WINDOWS_2019_DOCKER_IMAGE_NAME }} sign "-input_file_path=C:\CodeSignTool\examples\codesign (1).ps1" "-output_dir_path=C:\CodeSignTool\output"
 
       - name: Upload Signed Files
         uses: actions/upload-artifact@v4
